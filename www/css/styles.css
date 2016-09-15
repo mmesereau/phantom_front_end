@@ -1,0 +1,25 @@
+body {
+  background-image: url(phantom_open.png);
+}
+
+h1 {
+  color: white;
+  font-size: 95px;
+}
+h3 {
+  color: white;
+}
+p {
+  color: white;
+}
+li {
+  color: white;
+}
+
+textarea {
+  background-color: transparent;
+  border-width: 0px;
+  color: white;
+  font-size: 45px;
+  float: right;
+}

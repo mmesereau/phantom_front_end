@@ -2,7 +2,8 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>hello phaser!</title>
+        <title>Phantom</title>
+        <link rel="stylesheet" href="css/styles.css">
         <style type="text/css">
         [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
           display: none !important;
@@ -11,7 +12,73 @@
     </head>
     <body ng-app="Phantom">
       <div ng-controller="GameController as GC">
-        <button ng-show="GC.beforeStart" ng-init="GC.startGame()">{{GC.show}}</button>
+        <div class="container" ng-show="!GC.begin">
+          <div class="row">
+            <h1>Welcome to Phantom!</h1>
+          </div>
+          <div class="row" ng-show="!GC.initialize">
+            <div class="col-md-8 pull-left">
+              <h3>This is where the buttons go</h3>
+              <button ng-click="GC.pass()" class="gameButton">Begin Game</button>
+            </div>
+            <div class="col-md-4 pull-right">
+              <textarea cols="30" rows="10">
+Rules:
+Phantom is a turn based free for all battle game.  A player loses if he or she loses all of his or her hit points.  A player wins if all other players have lost.
+
+Players are allowed one action per turn.  Actions are: Basic Attack, Special Attack, Shield, Move, Dig, Capsule, Extra Turn.
+
+Basic Attack: Deals one hit point of damage to a target within line of sight.
+
+Special Attack: Deals two hit points of damage to a target within line of sight.  This costs two Attack Points.
+
+Shield: Creates a shield around a player that absorbs two points of damage.  This costs two Attack Points.
+
+Move: Relocates your player to any spot on the map.
+
+Dig: Removes all barriers along any single line.
+
+Capsule: Opens a capsule.
+
+Extra Turn: Allows you to take an extra turn after this one.  This costs three Attack Points.
+
+Capsules are the blue boxes located all around the board.  There are six capsules.
+
+Death Capsule: This capsule deals six damage to the player who opens it.  One capsule is a Death Capsule.
+
+Health Capsule: This capsule restores the player who opens it to full health and full Attack Points.  Two capsules are Health Capsules.
+
+Wand Capsule: This capsule allows the player who opens it to use two Special Attacks for free.  Two capsules are Wand Capsules.
+
+Lava Capsule: This capsule will throw lava in random places all over the board.  Players hit by lava will take one point of damage, and players standing on lava at the end of their turn will also take one point of damage.  One capsule is a Lava Capsule.
+
+The Phantom is a referree who is anything but impartial.  The Phantom is an agent of chaos.  For no other reason than because he feels like it, the Phantom will occasionally do actions such as Shuffle, Phantom Attack, and Phantom Heal.  The Phantom hates a stalemate, so when there are only two players remaining, he will impose his will on the game in a big way.
+              </textarea>
+            </div>
+          </div>
+          <div class="row" ng-show="GC.initialize && !GC.names">
+            <h3>How Many Players?</h3>
+            <form ng-submit="GC.pass_2()">
+              <h3>3</h3>
+              <input type="radio" value="3" ng-model="GC.players">
+              <h3>4</h3>
+              <input type="radio" value="4" ng-model="GC.players">
+              <h3>5</h3>
+              <input type="radio" value="5" ng-model="GC.players">
+              <h3>6</h3>
+              <input type="radio" value="6" ng-model="GC.players">
+              <input type="submit" value="GO!">
+            </form>
+          </div>
+          <div class="row" ng-show="GC.initialize && GC.names">
+            <h3>Name Yourself!</h3>
+            <div ng-repeat="player in GC.playerNames">
+              <input type="text" value="{{player}}">
+            </div>
+            <button ng-click="GC.startGame()">Begin Game!</button>
+          </div>
+        </div>
+
       </div>
 
     <script src="//cdn.jsdelivr.net/phaser/2.5.0/phaser.min.js"></script>
@@ -19,5 +86,6 @@
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.js"></script>
     <script type="text/javascript" src="js/app.js"></script>
     <script type="text/javascript" src="js/controllers.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     </body>
 </html>

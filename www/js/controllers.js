@@ -2,17 +2,31 @@
 
 app.controller("GameController", [function() {
   var vm = this;
+  vm.pass = function() {
+    vm.initialize = true;
+  };
+  vm.pass_2 = function() {
+    vm.names = true;
+    vm.playerNames = [];
+    for (var i = 0; i < vm.players; i++) {
+      vm.playerNames.push("Player " + (i + 1));
+    }
+  };
   vm.startGame = function() {
+    vm.begin = true;
       var game = new Phaser.Game($(window).width(), $(window).height(), Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
 
-      var map, layer, player_1, player_2, player_3, player_4, cursors, line, turn, players, basic_attack, special_attack, move, shield, extra_turn, dig, capsule, turn_text, lava_done, capsules, flicker, time;
+      var map, layer, sprites, line, turn, basic_attack, special_attack, move, shield, extra_turn, dig, capsule, turn_text, lava_done, capsules, flicker, time, notification, note, buttons, buttonsShow, digLine, gameOverNotification;
+      var players = [];
       function preload () {
         game.load.tilemap('map', 'assets/tilemaps/maps/tile_properties.json', null, Phaser.Tilemap.TILED_JSON);
         game.load.image('tiles', 'assets/tilemaps/tiles/gridtiles.png');
-        game.load.image('player_1', 'assets/sprites/red_ball.png');
-        game.load.image('player_2', 'assets/sprites/aqua_ball.png');
-        game.load.image('player_3', 'assets/sprites/purple_ball.png');
-        game.load.image('player_4', 'assets/sprites/blue_ball.png');
+        game.load.image('sprite_1', 'assets/sprites/red_ball.png');
+        game.load.image('sprite_2', 'assets/sprites/aqua_ball.png');
+        game.load.image('sprite_3', 'assets/sprites/purple_ball.png');
+        game.load.image('sprite_4', 'assets/sprites/blue_ball.png');
+        game.load.image('sprite_5', 'assets/sprites/green_ball.png');
+        game.load.image('sprite_6', 'assets/sprites/yellow_ball.png');
         game.load.image('basic_attack', 'assets/buttons/basic_attack.png');
         game.load.image('special_attack', 'assets/buttons/special_attack.png');
         game.load.image('move', 'assets/buttons/move.png');
@@ -23,6 +37,7 @@ app.controller("GameController", [function() {
         game.load.image('healthbar', 'assets/sprites/healthbar.png');
         game.load.image('sapbar', 'assets/sprites/sap.png');
         game.load.image('shield2', 'assets/sprites/shield2.png');
+        game.load.image('gameover', 'assets/buttons/endgame.png');
       }
 
       function create () {
@@ -30,10 +45,10 @@ app.controller("GameController", [function() {
         map = game.add.tilemap('map');
         map.addTilesetImage('tiles');
         layer = map.createLayer('Tile Layer 1');
-        player_1 = game.add.sprite(Math.floor(Math.random() * $(window).width() / 40) * 32, Math.floor(Math.random() * $(window).height() / 33) * 32 + 1, 'player_1');
-        player_2 = game.add.sprite(Math.floor(Math.random() * $(window).width() / 40) * 32, Math.floor(Math.random() * $(window).height() / 33) * 32 + 1, 'player_2');
-        player_3 = game.add.sprite(Math.floor(Math.random() * $(window).width() / 40) * 32, Math.floor(Math.random() * $(window).height() / 33) * 32 + 1, 'player_3');
-        player_4 = game.add.sprite(Math.floor(Math.random() * $(window).width() / 40) * 32, Math.floor(Math.random() * $(window).height() / 33) * 32 + 1, 'player_4');
+        sprites=['sprite_1', 'sprite_2', 'sprite_3', 'sprite_4', 'sprite_5', 'sprite_6'];
+        for (var i = 0; i < vm.playerNames.length; i++) {
+          players.push(game.add.sprite(Math.floor(Math.random() * $(window).width() / 40) * 32, Math.floor(Math.random() * $(window).height() / 33) * 32 + 1, sprites[Math.floor(Math.random() * sprites.length)]));
+        }
         basic_attack = game.add.button($(window).width() - 200, 200, 'basic_attack', do_basic_attack, this);
         special_attack = game.add.button($(window).width() - 200, 250, 'special_attack', do_special_attack, this);
         shield = game.add.button($(window).width() - 200, 300, 'shield', do_shield, this);
@@ -41,20 +56,18 @@ app.controller("GameController", [function() {
         capsule = game.add.button($(window).width() - 200, 50, 'capsule', do_capsule, this);
         dig = game.add.button($(window).width() - 200, 100, 'dig', do_dig, this);
         extra_turn = game.add.button($(window).width() - 200, 0, 'extra_turn', do_extra_turn, this);
-        turn_text = game.add.text($(window).width() - 200, 350, "Filler Text", {font: "40px Arial", fill: "white"});
-        line = new Phaser.Line(player_1.x, player_1.y, player_1.x, player_1.y);
+        turn_text = game.add.text(0, 0, "Filler Text", {font: "40px Arial", fill: "white"});
+        line = new Phaser.Line(players[0].x, players[0].y, players[0].x, players[0].y);
+        buttons=[basic_attack, special_attack, shield, move, capsule, dig, extra_turn];
+        buttonsShow = true;
         layer.resizeWorld();
         map.setCollisionBetween(6, 34);
         game.physics.p2.convertTilemap(map, layer);
         game.physics.p2.gravity.y = 0;
-        game.physics.p2.enable(player_1);
-        game.physics.p2.enable(player_2);
-        game.physics.p2.enable(player_3);
-        game.physics.p2.enable(player_4);
         game.physics.p2.enable(line);
-        cursors = game.input.keyboard.createCursorKeys();
-        players = [player_1, player_2, player_3, player_4];
         for (var i = 0; i < players.length; i++) {
+          game.physics.p2.enable(players[i]);
+          players[i].key = vm.playerNames[i];
           players[i].turn = false;
           players[i].hp = 6;
           players[i].maxhp = 6;
@@ -71,6 +84,13 @@ app.controller("GameController", [function() {
         }
         turn = 0;
         capsules = ['health', 'wand', 'lava', 'death', 'wand', 'health'];
+        notification = game.add.text(game.world.centerX, game.world.centerY, "Let the game begin!", {font: '64px Arial', fill: 'white'});
+        gameOverNotification = game.add.text(game.world.centerX, game.world.centerY, "", {font: '75px Arial', fill: 'white'});
+        note = setInterval(function() {
+          notification.fontSize++;
+          notification.x = game.world.centerX - notification.width / 2;
+          notification.y = game.world.centerY - notification.height / 2;
+        }, 1);
         generateMap();
       }
 
@@ -81,7 +101,7 @@ app.controller("GameController", [function() {
           players[i].sapbar.width = players[i].sapwidth * players[i].sap / players[i].maxsap;
           if (turn % players.length === i) {
             players[i].turn = true;
-            turn_text.text = players[i].key + "\'s \nTurn";
+            turn_text.text = players[i].key + "\'s Turn";
             players[i].height = 30;
             players[i].width = 30;
             changeline(players[i]);
@@ -98,16 +118,39 @@ app.controller("GameController", [function() {
           else {
             players[i].turn = false;
           }
+          if (Math.abs(players[i].x - game.input.activePointer.x) < players[i].width / 2 && Math.abs(players[i].y - game.input.activePointer.y) < players[i].height / 2) {
+            players[i].healthbar.visible = true;
+          }
         }
         if (Date.now() > time + 1000) {
-          clearInterval(flicker);
+          flicker = 0;
           for (i = 0; i < players.length; i++) {
             players[i].visible = true;
           }
         }
+        if (notification.fontSize > 180) {
+          note = 0;
+          notification.text = "";
+          notification.fontSize = 64;
+        }
+        for (i = 0; i < buttons.length; i++) {
+          if (game.input.activePointer.x < buttons[i].x || game.input.activePointer.y > buttons[2].y + buttons[2].height || !buttonsShow) {
+            buttons[i].visible = false;
+          }
+          else {
+            buttons[i].visible = true;
+          }
+        }
+        if (digLine) {
+          digLine.setTo(digLine.start.x, digLine.start.y, game.input.activePointer.x, game.input.activePointer.y);
+        }
+        if (players.length === 1) {
+          winner();
+        }
       }
 
       function do_capsule() {
+        buttonsShow = false;
         game.input.onDown.addOnce(do_capsule_2, this);
       }
 
@@ -117,7 +160,7 @@ app.controller("GameController", [function() {
         var tile = map.getTile(x, y, 'Tile Layer 1', true);
         if (tile.index === 34) {
           var index = Math.floor(Math.random() * capsules.length);
-          alert(capsules[index]);
+          notify(capsules[index]);
           if (capsules[index] === 'lava') {
             lava();
           }
@@ -208,25 +251,36 @@ app.controller("GameController", [function() {
       }
 
       function do_dig() {
+         buttonsShow = false;
         game.input.onDown.addOnce(do_dig_2, this);
       }
 
       function do_dig_2() {
-        var x = Math.ceil(game.input.activePointer.x / 32 - 1);
-        var y = Math.ceil(game.input.activePointer.y / 32 - 1);
-        var tile = map.getTile(x, y, 'Tile Layer 1', true);
-        if (tile.index === 6) {
+        digLine = new Phaser.Line(game.input.activePointer.x, game.input.activePointer.y, game.input.activePointer.x, game.input.activePointer.y);
+        game.input.onDown.addOnce(do_dig_3, this);
+      }
+
+
+      function do_dig_3() {
+        buttonsShow = true;
+        var coords = digLine.coordinatesOnLine(1);
+        for (var i = 1; i < coords.length; i++) {
+          var x = Math.ceil(coords[i][0] / 32 - 1);
+          var y = Math.ceil(coords[i][1] / 32 - 1);
           map.replace(6, 1, x, y, 1, 1);
-          nextTurn();
         }
+        digLine = undefined;
+        nextTurn();
       }
 
 
       function do_move() {
+        buttonsShow = false;
         game.input.onDown.addOnce(do_move_2, this);
       }
 
       function do_move_2() {
+        buttonsShow = true;
         for (var i = 0; i < players.length; i++) {
           if (players[i].turn) {
             players[i].reset(game.input.activePointer.x, game.input.activePointer.y);
@@ -251,10 +305,12 @@ app.controller("GameController", [function() {
       }
 
       function do_basic_attack() {
+        buttonsShow = false;
         game.input.onDown.addOnce(do_basic_attack_2, this);
       }
 
       function do_basic_attack_2() {
+        buttonsShow = true;
         for (var i = 0; i < players.length; i++) {
           if (players[i].target) {
             doDamage(players[i], 1);
@@ -267,6 +323,7 @@ app.controller("GameController", [function() {
         for (var i = 0; i < players.length; i++) {
           if (players[i].turn) {
             if (players[i].sap >= 2 || (players[i].wand && players[i].wand > 0)) {
+              buttonsShow = false;
               game.input.onDown.addOnce(do_special_attack_2, this);
             }
             else {
@@ -277,9 +334,11 @@ app.controller("GameController", [function() {
       }
 
       function do_special_attack_2() {
+        buttonsShow = true;
         for (var i = 0; i < players.length; i++) {
           for (var j = 0; j < players.length; j++) {
             if (players[i].target && players[j].turn) {
+              console.log(players[j].key + "does 2 damage to " + players[i].key);
               doDamage(players[i], 2);
               if (players[j].wand && players[j].wand > 0) {
                 players[j].wand--;
@@ -340,13 +399,11 @@ app.controller("GameController", [function() {
             players[j].width = 35;
             players[j].height = 35;
             players[j].target = true;
-            players[j].healthbar.visible = true;
           }
           else if (!players[j].turn) {
             players[j].width = 17;
             players[j].height = 17;
             players[j].target = false;
-            players[j].healthbar.visible = false;
           }
           else {
             players[j].target = false;
@@ -361,12 +418,45 @@ app.controller("GameController", [function() {
               players[i].extra_turn = false;
             }
             else {
+              lavaTest();
               turn++;
               turn = turn % players.length;
-              lavaTest();
               if (players.length === 2 || Math.floor(Math.random() * 10) === 3) {
                 shuffle();
               }
+              else if (Math.floor(Math.random() * 10 === 7)) {
+                phantomAttack();
+              }
+              else if (Math.floor(Math.random() * 10) === 5) {
+                phantomHeal();
+              }
+            }
+          }
+        }
+        buttonsShow = true;
+      }
+
+      function phantomHeal() {
+        for (var i = 0; i < players.length; i++) {
+          if (Math.floor(Math.random() * 2) === 1) {
+            notify("PHANTOM HEALS " + players[i].key + "!");
+            players[i].hp += 2;
+            if (players[i].hp > players[i].maxhp) {
+              players[i].hp = players[i].maxhp;
+            }
+          }
+        }
+      }
+
+      function phantomAttack() {
+        for (var i = 0; i < players.length; i++) {
+          if (Math.floor(Math.random() * 2) === 1) {
+            notify("PHANTOM ATTACKS " + players[i].key + "!");
+            if (players[i].hp > 3) {
+              doDamage(players[i], 3);
+            }
+            else {
+              doDamage(players[i], players[i].hp - 1);
             }
           }
         }
@@ -375,6 +465,7 @@ app.controller("GameController", [function() {
       function shuffle() {
         for (var i = 0; i < players.length; i++) {
           players[i].reset(Math.floor(Math.random() * $(window).width()), Math.floor(Math.random() * $(window).height()));
+          notify("SHUFFLE!");
         }
       }
 
@@ -401,19 +492,22 @@ app.controller("GameController", [function() {
         if (amt > 0) {
           target.hp -= amt;
           time = Date.now();
+          notify(target.key + " takes " + amt + " damage.");
           flicker = setInterval(function() {
             target.visible = !target.visible;
           }, 100);
         }
         if (target.hp <= 0) {
+          notify(target.key + " dies.");
           // if (target.turn) {
           //   turn--;
           // }
           levelUp();
+          target.visible = false;
+          target.width = 0;
           target.kill();
           players.splice(players.indexOf(target), 1);
         }
-        console.log(target.key + " takes " + amt + " damage");
       }
 
       function levelUp() {
@@ -434,8 +528,8 @@ app.controller("GameController", [function() {
 
       function generateMap() {
         for (var i = 0; i < 6; i++) {
-          var x = Math.floor(Math.random() * $(window).width() / 32);
-          var y = Math.floor(Math.random() * $(window).width() / 32);
+          var x = Math.floor(Math.random() * ($(window).width() / 32));
+          var y = Math.floor(Math.random() * ($(window).height() / 32));
           map.replace(1, 34, x, y, 1, 1);
         }
         for (i = 0; i < Math.ceil($(window).height() / 32); i++) {
@@ -444,6 +538,30 @@ app.controller("GameController", [function() {
               map.replace(1, 6, j, i, 1, 1);
             }
           }
+        }
+      }
+
+      function notify(string) {
+        notification.text = string;
+        notification.fontSize = 28;
+        note = setInterval(function() {
+          notification.fontSize++;
+          notification.x = game.world.centerX - notification.width / 2;
+          notification.y = game.world.centerY - notification.height / 2;
+        }, 500);
+      }
+
+      function winner() {
+        gameOverNotification.text = players[0].key + " has emerged victorious.  \nCongratulations, " + players[0].key + "!";
+        gameOverNotification.x = game.world.centerX - gameOverNotification.width / 2;
+        gameOverNotification.y = game.world.centerY - gameOverNotification.height / 2;
+        players[0].x = game.world.centerX;
+        players[0].y = game.world.centerY;
+        var gameOver = game.add.button(game.world.centerX, game.world.centerY + 1.5 * gameOverNotification.height, 'gameover', endGame, this);
+
+        function endGame() {
+          game.destroy();
+          vm.begin = false;
         }
       }
 
