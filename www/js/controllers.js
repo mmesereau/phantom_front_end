@@ -2,6 +2,7 @@
 
 app.controller("GameController", [function() {
   var vm = this;
+  vm.begin = false;
   vm.pass = function() {
     vm.initialize = true;
   };
@@ -12,12 +13,19 @@ app.controller("GameController", [function() {
       vm.playerNames.push("Player " + (i + 1));
     }
   };
+
+  vm.switch = function(bool) {
+    vm.begin = bool;
+    console.log(vm.begin);
+  }
   vm.startGame = function() {
-    vm.begin = true;
+    console.log(vm.playerNames);
+    vm.switch(true);
       var game = new Phaser.Game($(window).width(), $(window).height(), Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
 
       var map, layer, sprites, line, turn, basic_attack, special_attack, move, shield, extra_turn, dig, capsule, turn_text, lava_done, capsules, flicker, time, notification, note, buttons, buttonsShow, digLine, gameOverNotification;
       var players = [];
+      var notifications = [];
       function preload () {
         game.load.tilemap('map', 'assets/tilemaps/maps/tile_properties.json', null, Phaser.Tilemap.TILED_JSON);
         game.load.image('tiles', 'assets/tilemaps/tiles/gridtiles.png');
@@ -56,6 +64,7 @@ app.controller("GameController", [function() {
         capsule = game.add.button($(window).width() - 200, 50, 'capsule', do_capsule, this);
         dig = game.add.button($(window).width() - 200, 100, 'dig', do_dig, this);
         extra_turn = game.add.button($(window).width() - 200, 0, 'extra_turn', do_extra_turn, this);
+        var gameOver = game.add.button(game.world.centerX, game.world.centerY, 'gameover', endGame, this);
         turn_text = game.add.text(0, 0, "Filler Text", {font: "40px Arial", fill: "white"});
         line = new Phaser.Line(players[0].x, players[0].y, players[0].x, players[0].y);
         buttons=[basic_attack, special_attack, shield, move, capsule, dig, extra_turn];
@@ -132,6 +141,11 @@ app.controller("GameController", [function() {
           note = 0;
           notification.text = "";
           notification.fontSize = 64;
+          notifications.splice(0, 1);
+          if (notifications.length > 0) {
+            console.log(notifications);
+            notify();
+          }
         }
         for (i = 0; i < buttons.length; i++) {
           if (game.input.activePointer.x < buttons[i].x || game.input.activePointer.y > buttons[2].y + buttons[2].height || !buttonsShow) {
@@ -465,8 +479,8 @@ app.controller("GameController", [function() {
       function shuffle() {
         for (var i = 0; i < players.length; i++) {
           players[i].reset(Math.floor(Math.random() * $(window).width()), Math.floor(Math.random() * $(window).height()));
-          notify("SHUFFLE!");
         }
+        notify("SHUFFLE!");
       }
 
       function lavaTest() {
@@ -513,6 +527,9 @@ app.controller("GameController", [function() {
       function levelUp() {
         for (var i = 0; i < players.length; i++) {
           if (players[i].turn) {
+            if (players[i].hp !== 0) {
+              notify(players[i].key + " levels up!");
+            }
             players[i].hp += 2;
             players[i].maxhp += 2;
             players[i].sap += 3;
@@ -542,7 +559,10 @@ app.controller("GameController", [function() {
       }
 
       function notify(string) {
-        notification.text = string;
+        if (string) {
+          notifications.push(string);
+        }
+        notification.text = notifications[0];
         notification.fontSize = 28;
         note = setInterval(function() {
           notification.fontSize++;
@@ -557,14 +577,17 @@ app.controller("GameController", [function() {
         gameOverNotification.y = game.world.centerY - gameOverNotification.height / 2;
         players[0].x = game.world.centerX;
         players[0].y = game.world.centerY;
-        var gameOver = game.add.button(game.world.centerX, game.world.centerY + 1.5 * gameOverNotification.height, 'gameover', endGame, this);
-
-        function endGame() {
-          game.destroy();
-          vm.begin = false;
-        }
       }
 
+        function endGame() {
+          game.disableStep();
+          game.destroy();
+          vm.nextStep();
+        }
+    };
 
+    vm.nextStep = function() {
+      console.log("HELLO");
+      vm.switch(false);
     };
 }]);

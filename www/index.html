@@ -18,8 +18,7 @@
           </div>
           <div class="row" ng-show="!GC.initialize">
             <div class="col-md-8 pull-left">
-              <h3>This is where the buttons go</h3>
-              <button ng-click="GC.pass()" class="gameButton">Begin Game</button>
+              <button ng-click="GC.pass()" class="gameButton">Pass and Play</button>
             </div>
             <div class="col-md-4 pull-right">
               <textarea cols="30" rows="10">
@@ -72,8 +71,8 @@ The Phantom is a referree who is anything but impartial.  The Phantom is an agen
           </div>
           <div class="row" ng-show="GC.initialize && GC.names">
             <h3>Name Yourself!</h3>
-            <div ng-repeat="player in GC.playerNames">
-              <input type="text" value="{{player}}">
+            <div ng-repeat="player in GC.playerNames track by $index">
+              <input type="text" ng-model="GC.playerNames[$index]">
             </div>
             <button ng-click="GC.startGame()">Begin Game!</button>
           </div>
