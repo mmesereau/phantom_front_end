@@ -1,11 +1,22 @@
 'use strict';
 
-app.controller("GameController", [function() {
+app.controller("GameController", ['$scope', '$http', '$window', '$location', function($scope, $http, $window, $location) {
   var vm = this;
-  vm.begin = false;
+  if ($window.localStorage.token) {
+    vm.loggedIn = true;
+    vm.profile = JSON.parse(atob($window.localStorage.token.split('.')[1]));
+  }
+  vm.showRules = true;
+  vm.showLeaders = false;
+  vm.showRegisterPage = false;
+  vm.showLoginPage = false;
+  vm.newUser = {};
+  vm.user = {};
+
   vm.pass = function() {
     vm.initialize = true;
   };
+
   vm.pass_2 = function() {
     vm.names = true;
     vm.playerNames = [];
@@ -14,13 +25,108 @@ app.controller("GameController", [function() {
     }
   };
 
-  vm.switch = function(bool) {
-    vm.begin = bool;
-    console.log(vm.begin);
-  }
+  vm.leaderboard = function() {
+    $http.get('https://phantom-mmesereau.herokuapp.com/leaders')
+    .then(function(data) {
+      vm.showRules = false;
+      vm.showLeaders = true;
+      vm.showLoginPage = false;
+      vm.showRegisterPage = false;
+      vm.leaders = data.data;
+    });
+  };
+
+  vm.leadersSortWins = function() {
+    if (vm.leaders) {
+      vm.leaders.sort(function(a, b) {
+        return b.wins - a.wins;
+      });
+    }
+  };
+
+  vm.leadersSortLosses = function() {
+    if (vm.leaders) {
+      vm.leaders.sort(function(a, b) {
+        return b.losses - a.losses;
+      });
+    }
+  };
+
+  vm.leadersSortWinPercentage = function() {
+    if (vm.leaders) {
+      vm.leaders.sort(function(a, b) {
+        return - (a.wins / (a.wins + a.losses)) + (b.wins / (b.wins + b.losses));
+      });
+    }
+  };
+
+  vm.beginRegistration = function() {
+    vm.showRules = false;
+    vm.showLoginPage = false;
+    vm.showLeaders = false;
+    vm.showRegisterPage = true;
+  };
+
+  vm.beginLogin = function() {
+    vm.showRules = false;
+    vm.showRegisterPage = false;
+    vm.showLeaders = false;
+    vm.showLoginPage = true;
+  };
+
+  vm.register = function() {
+    if (vm.newUser.username && vm.newUser.nickname && vm.newUser.password && vm.newUser.repeatPassword) {
+      if (vm.newUser.password === vm.newUser.repeatPassword) {
+        var user = {
+          username: vm.newUser.username,
+          nickname: vm.newUser.nickname,
+          password: vm.newUser.password
+        };
+        $http.post('https://phantom-mmesereau.herokuapp.com/register', user)
+        .then(function(data) {
+          vm.showRegisterPage = false;
+          vm.showRules = true;
+          vm.loggedIn = true;
+          $window.localStorage.token = data.data.token;
+          vm.getProfile();
+        })
+        .catch(function(err) {
+          console.log(err);
+        });
+      }
+    }
+  };
+
+  vm.login = function() {
+    if (vm.user.username && vm.user.password) {
+      $http.post('https://phantom-mmesereau.herokuapp.com/login', vm.user)
+      .then(function(data) {
+        vm.invalidLoginData = false;
+        vm.showLoginPage = false;
+        vm.showRules = true;
+        vm.loggedIn = true;
+        $window.localStorage.token = data.data.token;
+        vm.getProfile();
+      })
+      .catch(function(err) {
+        vm.invalidLoginData = true;
+        console.log(err);
+      });
+    }
+  };
+
+  vm.logOut = function() {
+    delete $window.localStorage.token;
+    vm.loggedIn = false;
+  };
+
+  vm.getProfile = function() {
+    vm.profile = JSON.parse(atob($window.localStorage.token.split('.')[1]));
+  };
+
   vm.startGame = function() {
     console.log(vm.playerNames);
-    vm.switch(true);
+    vm.begin = true;
       var game = new Phaser.Game($(window).width(), $(window).height(), Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
 
       var map, layer, sprites, line, turn, basic_attack, special_attack, move, shield, extra_turn, dig, capsule, turn_text, lava_done, capsules, flicker, time, notification, note, buttons, buttonsShow, digLine, gameOverNotification;
@@ -64,7 +170,6 @@ app.controller("GameController", [function() {
         capsule = game.add.button($(window).width() - 200, 50, 'capsule', do_capsule, this);
         dig = game.add.button($(window).width() - 200, 100, 'dig', do_dig, this);
         extra_turn = game.add.button($(window).width() - 200, 0, 'extra_turn', do_extra_turn, this);
-        var gameOver = game.add.button(game.world.centerX, game.world.centerY, 'gameover', endGame, this);
         turn_text = game.add.text(0, 0, "Filler Text", {font: "40px Arial", fill: "white"});
         line = new Phaser.Line(players[0].x, players[0].y, players[0].x, players[0].y);
         buttons=[basic_attack, special_attack, shield, move, capsule, dig, extra_turn];
@@ -138,6 +243,7 @@ app.controller("GameController", [function() {
           }
         }
         if (notification.fontSize > 180) {
+          clearInterval(note);
           note = 0;
           notification.text = "";
           notification.fontSize = 64;
@@ -568,7 +674,7 @@ app.controller("GameController", [function() {
           notification.fontSize++;
           notification.x = game.world.centerX - notification.width / 2;
           notification.y = game.world.centerY - notification.height / 2;
-        }, 500);
+        }, 12);
       }
 
       function winner() {
@@ -577,17 +683,16 @@ app.controller("GameController", [function() {
         gameOverNotification.y = game.world.centerY - gameOverNotification.height / 2;
         players[0].x = game.world.centerX;
         players[0].y = game.world.centerY;
+        var gameOver = game.add.button(game.world.centerX, game.world.centerY, 'gameover', endGame, this);
       }
 
         function endGame() {
           game.disableStep();
           game.destroy();
-          vm.nextStep();
+          $scope.$apply(vm.begin = false);
+          $scope.$apply(vm.initialize = false);
         }
     };
 
-    vm.nextStep = function() {
-      console.log("HELLO");
-      vm.switch(false);
-    };
+
 }]);
