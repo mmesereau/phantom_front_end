@@ -125,7 +125,6 @@ app.controller("GameController", ['$scope', '$http', '$window', '$location', fun
   };
 
   vm.startGame = function() {
-    console.log(vm.playerNames);
     vm.begin = true;
       var game = new Phaser.Game($(window).width(), $(window).height(), Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
 
