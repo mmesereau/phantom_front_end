@@ -1,132 +1,78 @@
 'use strict';
 
-app.controller("GameController", ['$scope', '$http', '$window', '$location', function($scope, $http, $window, $location) {
+app.controller('HomeController', ['HomeService', '$state', '$window', '$scope', function(HomeService, $state, $window, $scope) {
   var vm = this;
+  vm.$state = $state;
+  $scope.game = {};
+  $scope.game.inProgress = false;
   if ($window.localStorage.token) {
+    vm.profile = HomeService.getProfile();
     vm.loggedIn = true;
-    vm.profile = JSON.parse(atob($window.localStorage.token.split('.')[1]));
   }
-  vm.showRules = true;
-  vm.showLeaders = false;
-  vm.showRegisterPage = false;
-  vm.showLoginPage = false;
-  vm.newUser = {};
-  vm.user = {};
-
-  vm.pass = function() {
-    vm.initialize = true;
-  };
-
-  vm.pass_2 = function() {
-    vm.names = true;
-    vm.playerNames = [];
-    for (var i = 0; i < vm.players; i++) {
-      vm.playerNames.push("Player " + (i + 1));
-    }
-  };
-
-  vm.leaderboard = function() {
-    $http.get('https://phantom-mmesereau.herokuapp.com/leaders')
-    .then(function(data) {
-      vm.showRules = false;
-      vm.showLeaders = true;
-      vm.showLoginPage = false;
-      vm.showRegisterPage = false;
-      vm.leaders = data.data;
-    });
-  };
-
-  vm.leadersSortWins = function() {
-    if (vm.leaders) {
-      vm.leaders.sort(function(a, b) {
-        return b.wins - a.wins;
-      });
-    }
-  };
-
-  vm.leadersSortLosses = function() {
-    if (vm.leaders) {
-      vm.leaders.sort(function(a, b) {
-        return b.losses - a.losses;
-      });
-    }
-  };
-
-  vm.leadersSortWinPercentage = function() {
-    if (vm.leaders) {
-      vm.leaders.sort(function(a, b) {
-        return - (a.wins / (a.wins + a.losses)) + (b.wins / (b.wins + b.losses));
-      });
-    }
-  };
-
-  vm.beginRegistration = function() {
-    vm.showRules = false;
-    vm.showLoginPage = false;
-    vm.showLeaders = false;
-    vm.showRegisterPage = true;
-  };
-
-  vm.beginLogin = function() {
-    vm.showRules = false;
-    vm.showRegisterPage = false;
-    vm.showLeaders = false;
-    vm.showLoginPage = true;
-  };
-
-  vm.register = function() {
-    if (vm.newUser.username && vm.newUser.nickname && vm.newUser.password && vm.newUser.repeatPassword) {
-      if (vm.newUser.password === vm.newUser.repeatPassword) {
-        var user = {
-          username: vm.newUser.username,
-          nickname: vm.newUser.nickname,
-          password: vm.newUser.password
-        };
-        $http.post('https://phantom-mmesereau.herokuapp.com/register', user)
-        .then(function(data) {
-          vm.showRegisterPage = false;
-          vm.showRules = true;
-          vm.loggedIn = true;
-          $window.localStorage.token = data.data.token;
-          vm.getProfile();
-        })
-        .catch(function(err) {
-          console.log(err);
-        });
-      }
-    }
-  };
-
-  vm.login = function() {
-    if (vm.user.username && vm.user.password) {
-      $http.post('https://phantom-mmesereau.herokuapp.com/login', vm.user)
-      .then(function(data) {
-        vm.invalidLoginData = false;
-        vm.showLoginPage = false;
-        vm.showRules = true;
-        vm.loggedIn = true;
-        $window.localStorage.token = data.data.token;
-        vm.getProfile();
-      })
-      .catch(function(err) {
-        vm.invalidLoginData = true;
-        console.log(err);
-      });
-    }
-  };
-
-  vm.logOut = function() {
+  vm.logout = function() {
     delete $window.localStorage.token;
     vm.loggedIn = false;
   };
+}]);
 
-  vm.getProfile = function() {
-    vm.profile = JSON.parse(atob($window.localStorage.token.split('.')[1]));
+app.controller("LoginController", ['LoginService', '$state', '$window', function(LoginService, $state, $window) {
+  if ($window.localStorage.token) {
+    $state.go('home');
+  }
+  var vm = this;
+  vm.$state = $state;
+  vm.user = {};
+  vm.login = function() {
+    LoginService.login(vm.user);
   };
+}]);
 
+app.controller("RegisterController", ['RegisterService', '$state', '$window', function(RegisterService, $state, $window) {
+  if ($window.localStorage.token) {
+    $state.go('home');
+  }
+  var vm = this;
+  vm.newUser = {};
+  vm.$state = $state;
+  vm.register = function() {
+    RegisterService.register(vm.newUser);
+  };
+}]);
+
+app.controller("LeaderboardController", ['LeaderboardService', '$state', '$http', function(LeaderboardService, $state, $http) {
+  var vm = this;
+  vm.$state = $state;
+  $http.get('https://phantom-mmesereau.herokuapp.com/leaders')
+  .then(function(data) {
+    vm.leaders = data.data;
+    LeaderboardService.percentage(vm.leaders);
+  })
+  .catch(function(err) {
+    console.log(err);
+  });
+  vm.wins = function() {
+    LeaderboardService.wins(vm.leaders);
+  };
+  vm.losses = function() {
+    LeaderboardService.losses(vm.leaders);
+  };
+  vm.percentage = function() {
+    LeaderboardService.percentage(vm.leaders);
+  };
+}]);
+
+app.controller("GameController", ['GameService', '$scope', '$state', function(GameService, $scope, $state) {
+  var vm = this;
+  vm.$state = $state;
+  vm.playerNames = [];
+  vm.startPnP = function() {
+    for (var i = 0; i < vm.players; i++) {
+      vm.playerNames.push("Player " + (i + 1));
+    }
+    vm.pnpinit = true;
+  };
   vm.startGame = function() {
-    console.log(vm.playerNames);
-    vm.begin = true;
+    $scope.game.inProgress = true;
       var game = new Phaser.Game($(window).width(), $(window).height(), Phaser.CANVAS, '', { preload: preload, create: create, update: update, render: render });
 
       var map, layer, sprites, line, turn, basic_attack, special_attack, move, shield, extra_turn, dig, capsule, turn_text, lava_done, capsules, flicker, time, notification, note, buttons, buttonsShow, digLine, gameOverNotification;
@@ -689,8 +635,7 @@ app.controller("GameController", ['$scope', '$http', '$window', '$location', fun
         function endGame() {
           game.disableStep();
           game.destroy();
-          $scope.$apply(vm.begin = false);
-          $scope.$apply(vm.initialize = false);
+          $scope.game.inProgress = false;
         }
     };
 

@@ -1,0 +1,23 @@
+<div class="row">
+  <div class="col-xs-5">
+    <h3>How Many Players?</h3>
+    <form ng-submit="GC.startPnP()">
+      <h3>3</h3>
+      <input type="radio" value="3" ng-model="GC.players">
+      <h3>4</h3>
+      <input type="radio" value="4" ng-model="GC.players">
+      <h3>5</h3>
+      <input type="radio" value="5" ng-model="GC.players">
+      <h3>6</h3>
+      <input type="radio" value="6" ng-model="GC.players">
+      <input type="submit" value="GO!">
+    </form>
+  </div>
+  <div class="col-xs-6" ng-show="GC.pnpinit">
+    <h3>Name Yourself!</h3>
+    <div ng-repeat="player in GC.playerNames track by $index">
+      <input type="text" ng-model="GC.playerNames[$index]">
+    </div>
+    <button ng-click="GC.startGame()">Begin Game!</button>
+  </div>
+</div>

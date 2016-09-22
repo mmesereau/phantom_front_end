@@ -11,114 +11,21 @@
         </style>
     </head>
     <body ng-app="Phantom">
-      <div ng-controller="GameController as GC">
-        <div class="container" ng-hide="GC.begin">
+      <div ng-controller="HomeController as HC">
+        <div class="container" ng-if="!game.inProgress">
           <div class="row">
             <h1>Welcome to Phantom!</h1>
           </div>
-          <div class="row" ng-show="!GC.initialize">
+          <div class="row">
             <div class="col-md-8 pull-left">
-              <button ng-click="GC.pass()" class="gameButton">Pass and Play</button>
-              <button ng-click="GC.leaderboard()">Leaders</button>
-              <button ng-show="!GC.loggedIn" ng-click="GC.beginRegistration()">Register</button>
-              <button ng-show="!GC.loggedIn" ng-click="GC.beginLogin()">Log In</button>
-              <button ng-show="GC.loggedIn" ng-click="GC.logOut()">Log Out</button>
-            </div>
-            <div class="col-md-4 pull-right">
-              <textarea cols="30" rows="10" ng-show="GC.showRules">
-Rules:
-Phantom is a turn based free for all battle game.  A player loses if he or she loses all of his or her hit points.  A player wins if all other players have lost.
-
-Players are allowed one action per turn.  Actions are: Basic Attack, Special Attack, Shield, Move, Dig, Capsule, Extra Turn.
-
-Basic Attack: Deals one hit point of damage to a target within line of sight.
-
-Special Attack: Deals two hit points of damage to a target within line of sight.  This costs two Attack Points.
-
-Shield: Creates a shield around a player that absorbs two points of damage.  This costs two Attack Points.
-
-Move: Relocates your player to any spot on the map.
-
-Dig: Removes all barriers along any single line.
-
-Capsule: Opens a capsule.
-
-Extra Turn: Allows you to take an extra turn after this one.  This costs three Attack Points.
-
-Capsules are the blue boxes located all around the board.  There are six capsules.
-
-Death Capsule: This capsule deals six damage to the player who opens it.  One capsule is a Death Capsule.
-
-Health Capsule: This capsule restores the player who opens it to full health and full Attack Points.  Two capsules are Health Capsules.
-
-Wand Capsule: This capsule allows the player who opens it to use two Special Attacks for free.  Two capsules are Wand Capsules.
-
-Lava Capsule: This capsule will throw lava in random places all over the board.  Players hit by lava will take one point of damage, and players standing on lava at the end of their turn will also take one point of damage.  One capsule is a Lava Capsule.
-
-The Phantom is a referree who is anything but impartial.  The Phantom is an agent of chaos.  For no other reason than because he feels like it, the Phantom will occasionally do actions such as Shuffle, Phantom Attack, and Phantom Heal.  The Phantom hates a stalemate, so when there are only two players remaining, he will impose his will on the game in a big way.
-              </textarea>
-              <table ng-show="GC.showLeaders">
-                <tr>
-                  <td>Name</td>
-                  <td ng-click="GC.leadersSortWins()">Wins</td>
-                  <td ng-click="GC.leadersSortLosses()">Losses</td>
-                  <td ng-click="GC.leadersSortWinPercentage()">Win Percentage</td>
-                </tr>
-                <tr ng-repeat="leader in GC.leaders">
-                  <td>{{leader.nickname}}</td>
-                  <td>{{leader.wins}}</td>
-                  <td>{{leader.losses}}</td>
-                  <td>{{leader.wins / (leader.wins + leader.losses) | number:2}}</td>
-                </tr>
-              </table>
-              <form ng-show="GC.showRegisterPage" ng-submit="GC.register()">
-                <label for="GC.newUser.username">User Name</label>
-                <input type="text" ng-model="GC.newUser.username">
-                <label for="GC.newUser.nickname">Nickname (This is what people will see you as)</label>
-                <input type="text" ng-model="GC.newUser.nickname">
-                <label for="GC.newUser.password">Password</label>
-                <input type="password" ng-model="GC.newUser.password">
-                <label for="GC.newUser.repeatPassword">Repeat your Password</label>
-                <input type="password" ng-model="GC.newUser.repeatPassword">
-                <input type="submit" value="Register!">
-              </form>
-              <h3 ng-show="GC.showLoginPage && GC.invalidLoginData">Your User Name or Password is invalid.  Please try again.</h3>
-              <form ng-show="GC.showLoginPage" ng-submit="GC.login()">
-                <label for="GC.user.username">User Name</label>
-                <input type="text" ng-model="GC.user.username">
-                <label for="GC.user.password">Password</label>
-                <input type="text" ng-model="GC.user.password">
-                <input type="submit" value="Log In!">
-              </form>
-              <div ng-show="GC.showRules && GC.loggedIn">
-                <h2>{{GC.profile.nickname}}'s Profile</h2>
-                <h3>Wins:  {{GC.profile.wins}}</h3>
-                <h3>Losses:  {{GC.profile.losses}}</h3>
-                <h3>Win Percentage:  {{GC.profile.wins / Math.max((GC.profile.wins + GC.profile.losses), 1)}}</h3>
-              </div>
+              <button ui-sref="pnp">Pass and Play</button>
+              <button ui-sref="leaderboard">Leaders</button>
+              <button ng-show="!HC.loggedIn" ui-sref="register">Register</button>
+              <button ng-show="!HC.loggedIn" ui-sref="login">Log In</button>
+              <button ng-show="HC.loggedIn" ng-click="HC.logout()">Log Out</button>
             </div>
           </div>
-          <div class="row" ng-show="GC.initialize && !GC.names">
-            <h3>How Many Players?</h3>
-            <form ng-submit="GC.pass_2()">
-              <h3>3</h3>
-              <input type="radio" value="3" ng-model="GC.players">
-              <h3>4</h3>
-              <input type="radio" value="4" ng-model="GC.players">
-              <h3>5</h3>
-              <input type="radio" value="5" ng-model="GC.players">
-              <h3>6</h3>
-              <input type="radio" value="6" ng-model="GC.players">
-              <input type="submit" value="GO!">
-            </form>
-          </div>
-          <div class="row" ng-show="GC.initialize && GC.names">
-            <h3>Name Yourself!</h3>
-            <div ng-repeat="player in GC.playerNames track by $index">
-              <input type="text" ng-model="GC.playerNames[$index]">
-            </div>
-            <button ng-click="GC.startGame()">Begin Game!</button>
-          </div>
+          <div ui-view></div>
         </div>
 
       </div>
@@ -126,9 +33,11 @@ The Phantom is a referree who is anything but impartial.  The Phantom is an agen
     <script src="//cdn.jsdelivr.net/phaser/2.5.0/phaser.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.js"></script>
+    <script src="js/angular-ui-router.js"></script>
     <script type="text/javascript" src="js/app.js"></script>
     <script type="text/javascript" src="js/controllers.js"></script>
     <script type="text/javascript" src="js/factories.js"></script>
+    <script type="text/javascript" src="js/services.js"></script>
     <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     </body>
 </html>
