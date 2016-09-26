@@ -601,8 +601,8 @@ app.controller("GameController", ['GameService', '$scope', '$state', function(Ga
           var y = Math.floor(Math.random() * ($(window).height() / 32));
           map.replace(1, 34, x, y, 1, 1);
         }
-        for (i = 0; i < Math.ceil($(window).height() / 32); i++) {
-          for (var j = 0; j < Math.ceil($(window).width() / 32); j++) {
+        for (i = 1; i < Math.ceil($(window).height() / 32) + 1; i++) {
+          for (var j = 1; j < Math.ceil($(window).width() / 32) + 1; j++) {
             if (Math.floor(Math.random() * 5) === 0) {
               map.replace(1, 6, j, i, 1, 1);
             }
